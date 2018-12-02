@@ -27,6 +27,7 @@ The functions we are using to generate the fake data are:
 f1 <- function(x) -2 + (3*x)
 f2 <- function(x) 3
 f3 <- function(x) (6*(x**2)) + (3*x) + 3
+f4 <- 
 
 makeFakeData <- function(f) {
     f(mytab[,1]) + rnorm(n = length(mytab[,1]), mean = 0, sd = 1)
@@ -35,10 +36,11 @@ makeFakeData <- function(f) {
 
 ```{r linear-fit, echo=FALSE}
 funclist <- list(f1, f2, f3)
-means_slopes <- integer(3)
-means_intercepts <- integer(3)
-sd_slopes <- integer(3)
-sd_intercepts <- integer(3)
+means_slopes <- integer(length(funclist))
+means_intercepts <- integer(length(funclist))
+sd_slopes <- integer(length(funclist))
+sd_intercepts <- integer(length(funclist))
+
 #print.noquote(funclist[1])
 func_ind <- 1
 for (fn in funclist) {
@@ -46,10 +48,10 @@ for (fn in funclist) {
   for ( k in 1:1000 ) {
     dat[k,] <- coef(lm( makeFakeData(fn) ~ mytab[,1] ))
   }
-  
+  colnames(dat) <- c("Intercept", "Slope")
   plot(dat)
   print.noquote(paste("Function number", func_ind))
-  colnames(dat) <- c("Intercept", "Slope")
+  
   means_intercepts[func_ind] <- mean(dat[,"Intercept"])
   means_slopes[func_ind] <- mean(dat[,"Slope"])
   sd_intercepts[func_ind] <- sd(dat[,"Intercept"])
@@ -66,4 +68,10 @@ for (fn in funclist) {
 
 ```
 
-``` {r }
+``` {r comparison-charts, echo=FALSE}
+function_num <- 1:length(sd_slopes)
+plot(sd_slopes ~ function_num, type = 'l', ylim = c(0, max(sd_slopes)), main = "Standard deviation of slopes")
+plot(sd_intercepts ~ function_num, type = 'l', ylim =  c(0, max(sd_intercepts)), main = "Standard deviation of y-intercepts")
+plot(means_slopes ~ function_num, type = 'l', main = "Means of slopes")
+plot(means_intercepts ~ function_num, type = 'l', main = "Means of y-intercepts")
+```
