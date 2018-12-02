@@ -1,0 +1,69 @@
+---
+title: "Propagating Monte Carlo Error"
+author: "Team A7"
+date: "11/29/2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+# Set up my table with provided data
+mytab <- read_tsv("classA7.dat", col_names = FALSE)
+mytab <- t(apply(mytab, c(1, 2), function(x) eval(parse(text = x))))
+colnames(mytab) <- c("X", "Y")
+rownames(mytab) <- NULL
+```
+
+The functions we are using to generate the fake data are:
+1. f1(x) = -2 + 3x
+2. f2(x) = 3
+3. f3(x) = 6x^2 + 3x + 3
+
+```{r data-gen}
+f1 <- function(x) -2 + (3*x)
+f2 <- function(x) 3
+f3 <- function(x) (6*(x**2)) + (3*x) + 3
+
+makeFakeData <- function(f) {
+    f(mytab[,1]) + rnorm(n = length(mytab[,1]), mean = 0, sd = 1)
+}
+```
+
+```{r linear-fit, echo=FALSE}
+funclist <- list(f1, f2, f3)
+means_slopes <- integer(3)
+means_intercepts <- integer(3)
+sd_slopes <- integer(3)
+sd_intercepts <- integer(3)
+#print.noquote(funclist[1])
+func_ind <- 1
+for (fn in funclist) {
+  dat = matrix(nrow = 1000, ncol = 2)
+  for ( k in 1:1000 ) {
+    dat[k,] <- coef(lm( makeFakeData(fn) ~ mytab[,1] ))
+  }
+  
+  plot(dat)
+  print.noquote(paste("Function number", func_ind))
+  colnames(dat) <- c("Intercept", "Slope")
+  means_intercepts[func_ind] <- mean(dat[,"Intercept"])
+  means_slopes[func_ind] <- mean(dat[,"Slope"])
+  sd_intercepts[func_ind] <- sd(dat[,"Intercept"])
+  sd_slopes[func_ind] <- sd(dat[,"Slope"])
+  print.noquote(paste("Mean of the intercept:", means_intercepts[func_ind]))
+  print.noquote(paste("Variance of the intercept:", means_slopes[func_ind]))
+  print.noquote(paste("Mean of the slope:", sd_slopes[func_ind]))
+  print.noquote(paste("Variance of the slope:", sd_intercepts[func_ind]))
+  print.noquote("")
+ 
+  
+  func_ind <- func_ind + 1
+}
+
+```
+
+``` {r }
