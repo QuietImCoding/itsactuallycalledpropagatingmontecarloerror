@@ -22,12 +22,15 @@ The functions we are using to generate the fake data are:
 1. f1(x) = -2 + 3x
 2. f2(x) = 3
 3. f3(x) = 6x^2 + 3x + 3
+4. f4(x) = 10x + 3
+5. f5(x) = -4x - 6
 
 ```{r data-gen}
 f1 <- function(x) -2 + (3*x)
 f2 <- function(x) 3
 f3 <- function(x) (6*(x**2)) + (3*x) + 3
-f4 <- 
+f4 <- function(x) (10*x) + 3
+f5 <- function(x) (-4 * x) - 6
 
 makeFakeData <- function(f) {
     f(mytab[,1]) + rnorm(n = length(mytab[,1]), mean = 0, sd = 1)
@@ -35,7 +38,7 @@ makeFakeData <- function(f) {
 ```
 
 ```{r linear-fit, echo=FALSE}
-funclist <- list(f1, f2, f3)
+funclist <- list(f1, f2, f3, f4, f5)
 means_slopes <- integer(length(funclist))
 means_intercepts <- integer(length(funclist))
 sd_slopes <- integer(length(funclist))
@@ -46,11 +49,25 @@ func_ind <- 1
 for (fn in funclist) {
   dat = matrix(nrow = 1000, ncol = 2)
   for ( k in 1:1000 ) {
-    dat[k,] <- coef(lm( makeFakeData(fn) ~ mytab[,1] ))
+    fakedat <- makeFakeData(fn)
+    dat[k,] <- coef(lm( fakedat ~ mytab[,1] ))
   }
+
   colnames(dat) <- c("Intercept", "Slope")
-  plot(dat)
-  print.noquote(paste("Function number", func_ind))
+  if (func_ind < 3) {
+    plot(dat)
+    densities <- density(dat[,"Intercept"])
+    hist(dat[,"Intercept"], freq = FALSE,  main = "Density plot for y-intercept", xlim = c(min(fakedat), max(fakedat)))
+    lines(densities)
+    abline(a=0, b = 0)
+    print.noquote(paste("Function number", func_ind))
+    
+    densities <- density(dat[,"Slope"])
+    hist(dat[,"Slope"], freq = FALSE,  main = "Density plot for slope")
+    lines(densities)
+    abline(a=0, b = 0)
+    print.noquote(paste("Function number", func_ind))
+  }
   
   means_intercepts[func_ind] <- mean(dat[,"Intercept"])
   means_slopes[func_ind] <- mean(dat[,"Slope"])
@@ -68,6 +85,8 @@ for (fn in funclist) {
 
 ```
 
+
+
 ``` {r comparison-charts, echo=FALSE}
 function_num <- 1:length(sd_slopes)
 plot(sd_slopes ~ function_num, type = 'l', ylim = c(0, max(sd_slopes)), main = "Standard deviation of slopes")
@@ -75,3 +94,20 @@ plot(sd_intercepts ~ function_num, type = 'l', ylim =  c(0, max(sd_intercepts)),
 plot(means_slopes ~ function_num, type = 'l', main = "Means of slopes")
 plot(means_intercepts ~ function_num, type = 'l', main = "Means of y-intercepts")
 ```
+
+``` {r variance-calc, echo=FALSE}
+covariance <- cov(dat[,"Slope"], dat[,"Intercept"])
+print(paste("Covariance between slope and intercept", covariance))
+
+
+for (func_ind in 1:length(sd_intercepts)) {
+  print.noquote(paste0(func_ind, ". ", 
+                "V(f(x)) = ", 
+                round(sd_intercepts[func_ind]**2, 6), " + ", 
+                round(sd_slopes[func_ind]**2, 6), "x^2 + ", 
+                round(covariance, 3) * 2)
+                )
+}
+variances <- sd_slopes
+``` 
+# Conclusion
