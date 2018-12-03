@@ -113,5 +113,6 @@ top_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) - (1.65 * sqrt(Vc0 
 plot( mytab[,1], bottom_int, type = 'l', col = "red")
 abline(lm( mytab[,2] ~ mytab[,1]))
 lines( mytab[,1], top_int, col = "red")
+points(mytab[,1], mytab[,2])
 ```
 # Conclusion
