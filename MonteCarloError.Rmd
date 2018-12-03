@@ -99,15 +99,19 @@ plot(means_intercepts ~ function_num, type = 'l', main = "Means of y-intercepts"
 covariance <- cov(dat[,"Slope"], dat[,"Intercept"])
 print(paste("Covariance between slope and intercept", covariance))
 
+realdat_coefs <- coef( lm( mytab[,2] ~ mytab[,1]) )
 
-for (func_ind in 1:length(sd_intercepts)) {
-  print.noquote(paste0(func_ind, ". ", 
-                "V(f(x)) = ", 
-                round(sd_intercepts[func_ind]**2, 6), " + ", 
-                round(sd_slopes[func_ind]**2, 6), "x^2 + ", 
-                round(covariance, 3) * 2)
-                )
-}
-variances <- sd_slopes
+Vc0 <- round(mean(sd_intercepts)**2, 6)
+Vc1<- round(mean(sd_slopes)**2, 6)
+print.noquote(paste0("V(f(x)) = ", Vc0, " + ", Vc1, "x^2 + ", "0"))
 ``` 
+
+``` {r confidence-interval, echo=FALSE}
+bottom_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) + (1.65 * sqrt(Vc0 + Vc1 * (mytab[,1]**2) ))
+top_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) - (1.65 * sqrt(Vc0 + Vc1 * (mytab[,1]**2) ))
+
+plot( mytab[,1], bottom_int, type = 'l', col = "red")
+abline(lm( mytab[,2] ~ mytab[,1]))
+lines( mytab[,1], top_int, col = "red")
+```
 # Conclusion
