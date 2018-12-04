@@ -10,7 +10,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-
+library(pander)
 # Set up my table with provided data
 mytab <- read_tsv("classA7.dat", col_names = FALSE)
 mytab <- t(apply(mytab, c(1, 2), function(x) eval(parse(text = x))))
@@ -19,6 +19,7 @@ rownames(mytab) <- NULL
 ```
 
 The functions we are using to generate the fake data are:
+
 1. f1(x) = -2 + 3x
 2. f2(x) = 3
 3. f3(x) = 6x^2 + 3x + 3
@@ -36,8 +37,10 @@ makeFakeData <- function(f) {
     f(mytab[,1]) + rnorm(n = length(mytab[,1]), mean = 0, sd = 1)
 }
 ```
+
 Generation and plotting of the 1000 c0 and c1 values from fake data
-```{r linear-fit, echo=FALSE}
+
+```{r linear-fit, echo=FALSE, dev="png", dpi=300, results="asis", tidy=TRUE}
 funclist <- list(f1, f2, f3, f4, f5)
 means_slopes <- integer(length(funclist))
 means_intercepts <- integer(length(funclist))
@@ -54,44 +57,40 @@ for (fn in funclist) {
   }
 
   colnames(dat) <- c("Intercept", "Slope")
+  means_intercepts[func_ind] <- mean(dat[,"Intercept"])
+  means_slopes[func_ind] <- mean(dat[,"Slope"])
+  sd_intercepts[func_ind] <- sd(dat[,"Intercept"])
+  sd_slopes[func_ind] <- sd(dat[,"Slope"])
   if (func_ind < 3) {
+    pandoc.header(paste("Function number", func_ind), level = 2)
     plot(dat)
     densities <- density(dat[,"Intercept"])
     hist(dat[,"Intercept"], freq = FALSE,  main = "Density plot for y-intercept", xlim = c(min(fakedat), max(fakedat)))
     lines(densities)
     abline(a=0, b = 0)
-    print.noquote(paste("Function number", func_ind))
-    
     densities <- density(dat[,"Slope"])
     hist(dat[,"Slope"], freq = FALSE,  main = "Density plot for slope")
     lines(densities)
     abline(a=0, b = 0)
-    print.noquote(paste("Function number", func_ind))
+    pandoc.p(paste("Mean of the intercept:", means_intercepts[func_ind]))
+    pandoc.p(paste("Variance of the intercept:", means_slopes[func_ind]))
+    pandoc.p(paste("Mean of the slope:", sd_slopes[func_ind]))
+    pandoc.p(paste("Variance of the slope:", sd_intercepts[func_ind]))
   }
-  
-  means_intercepts[func_ind] <- mean(dat[,"Intercept"])
-  means_slopes[func_ind] <- mean(dat[,"Slope"])
-  sd_intercepts[func_ind] <- sd(dat[,"Intercept"])
-  sd_slopes[func_ind] <- sd(dat[,"Slope"])
-  print.noquote(paste("Mean of the intercept:", means_intercepts[func_ind]))
-  print.noquote(paste("Variance of the intercept:", means_slopes[func_ind]))
-  print.noquote(paste("Mean of the slope:", sd_slopes[func_ind]))
-  print.noquote(paste("Variance of the slope:", sd_intercepts[func_ind]))
-  print.noquote("")
- 
-  
   func_ind <- func_ind + 1
 }
 
 ```
 
-Conclusion: 
-The bell shape historiogram indicated that the values of c0 and c1 are normaly distributed.
+##Conclusion: 
+The bell shape histogram indicated that the values of c0 and c1 are normally distributed.
 
-Calculation of the standard deviation and mean value of c0 and c1 for every function.
+\pagebreak
+
+#Calculation of the standard deviation and mean value of c0 and c1 for every function.
 We plotted the values found for analyzing the influence of f(x) on mean and variance.
 
-``` {r comparison-charts, echo=FALSE}
+``` {r comparison-charts, echo=FALSE, dev="png", dpi=300}
 function_num <- 1:length(sd_slopes)
 plot(sd_slopes ~ function_num, type = 'l', ylim = c(0, max(sd_slopes)), main = "Standard deviation of slopes")
 plot(sd_intercepts ~ function_num, type = 'l', ylim =  c(0, max(sd_intercepts)), main = "Standard deviation of y-intercepts")
@@ -99,41 +98,43 @@ plot(means_slopes ~ function_num, type = 'l', main = "Means of slopes")
 plot(means_intercepts ~ function_num, type = 'l', main = "Means of y-intercepts")
 ```
 
-Conclusion:
+##Conclusion:
 Mean depends on f(x)
-Variencec does not.
+Variance does not.
 
-We now calculated the covarience of c0 and c1. Since this value is related to the variences, we know that the choice of f(x) will not influence the result.
+\pagebreak
 
-``` {r covariance-calc, echo=FALSE}
+We now calculated the covarience of c0 and c1. Since this value is related to the variances, we know that the choice of f(x) will not influence the result.
+
+``` {r covariance-calc, echo=FALSE, results="asis"}
 covariance <- cov(dat[,"Slope"], dat[,"Intercept"])
-print(paste("Covariance between slope and intercept", covariance))
+pandoc.p(paste("Covariance between slope and intercept", covariance))
 ```
 
-Conclusion:
-The value found for the convariance is neglectible, and so the values of c0 and c1 are independent.
+##Conclusion:
+The value found for the convariance is negligible, and so the values of c0 and c1 are independent.
 
 From the covarience and varience values found we found the formula for the varience of the linear model, depending on the choice of x.
 
-``` {r variance-calc, echo=FALSE}
+``` {r variance-calc, echo=FALSE, results="asis"}
 realdat_coefs <- coef( lm( mytab[,2] ~ mytab[,1]) )
 
 Vc0 <- round(mean(sd_intercepts)**2, 6)
 Vc1<- round(mean(sd_slopes)**2, 6)
-print.noquote(paste0("V(f(x)) = ", Vc0, " + ", Vc1, "x^2 + ", "0"))
+pandoc.p(paste0("V(f(x)) = ", Vc0, " + ", Vc1, "x^2 + ", "0"))
 ``` 
 
 From the previous variance formula, we calculated the 90% confidence interval for the linear model.
 We plotted the interval together with the best fit linear model and the original data.
 
-``` {r confidence-interval, echo=FALSE}
+``` {r confidence-interval, echo=FALSE, dev="png", dpi=300}
 bottom_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) + (1.65 * sqrt(Vc0 + Vc1 * (mytab[,1]**2) ))
 top_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) - (1.65 * sqrt(Vc0 + Vc1 * (mytab[,1]**2) ))
 
-plot( mytab[,1], bottom_int, type = 'l', col = "red")
+plot( mytab[,1], bottom_int, type = 'l', col = "red", lt=3)
 abline(lm( mytab[,2] ~ mytab[,1]))
-lines( mytab[,1], top_int, col = "red")
-points(mytab[,1], mytab[,2])
+lines( mytab[,1], top_int, col = "red", lt=3)
+points(mytab[,1], mytab[,2], pch=16, cex=0.7)
 ```
 
 # Conclusion
