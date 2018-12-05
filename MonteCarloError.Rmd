@@ -137,13 +137,14 @@ lines( mytab[,1], top_int, col = "red", lt=3)
 points(mytab[,1], mytab[,2], pch=16, cex=0.7)
 ```
 
-Solving the integral for I, we found that I = 2c0
+Solving the integral $\hat I = \int (\hat {C_0} + \hat {C_1}x)dx$ for $\hat I$, we found that $\hat I = 2 \hat {C_0}$
 Therefore V(I) = 4V(c0)
 CI = I +/- z(0.05)*V(I)
-``` {r confidence-interval-I, echo=FALSE}
+``` {r confidence-interval-I, echo=FALSE, results = "asis"}
 VI <- 4*Vc0
 CI_l <- 2*realdat_coefs[1] - (1.64 * VI)
 CI_u <- 2*realdat_coefs[1] + (1.64 * VI)
 pandoc.p(paste("CI[", CI_l, ",", CI_u, "]"))
 ```
+
 # Conclusion
