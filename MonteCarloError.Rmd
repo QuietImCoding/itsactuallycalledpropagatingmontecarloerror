@@ -137,4 +137,13 @@ lines( mytab[,1], top_int, col = "red", lt=3)
 points(mytab[,1], mytab[,2], pch=16, cex=0.7)
 ```
 
+Solving the integral for I, we found that I = 2c0
+Therefore V(I) = 4V(c0)
+CI = I +/- z(0.05)*V(I)
+``` {r confidence-interval-I, echo=FALSE}
+VI <- 4*Vc0
+CI_l <- 2*realdat_coefs[1] - (1.64 * VI)
+CI_u <- 2*realdat_coefs[1] + (1.64 * VI)
+pandoc.p(paste("CI[", CI_l, ",", CI_u, "]"))
+```
 # Conclusion
