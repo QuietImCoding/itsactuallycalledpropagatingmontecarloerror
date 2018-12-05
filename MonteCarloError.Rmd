@@ -5,6 +5,8 @@ date: "11/29/2018"
 output:
   pdf_document: default
   html_document: default
+fig_width: 2
+fig_height: 1
 ---
 
 ```{r setup, include=FALSE}
@@ -20,11 +22,11 @@ rownames(mytab) <- NULL
 
 The functions we are using to generate the fake data are:
 
-1. f1(x) = -2 + 3x
-2. f2(x) = 3
-3. f3(x) = 6x^2 + 3x + 3
-4. f4(x) = 10x + 3
-5. f5(x) = -4x - 6
+1. $f_1(x) = -2 + 3x$
+2. $f_2(x) = 3$
+3. $f_3(x) = 6x^2 + 3x + 3$
+4. $f_4(x) = 10x + 3$
+5. $f_5(x) = -4x - 6$
 
 ```{r data-gen, echo=FALSE}
 f1 <- function(x) -2 + (3*x)
@@ -40,7 +42,7 @@ makeFakeData <- function(f) {
 
 Generation and plotting of the 1000 c0 and c1 values from fake data
 
-```{r linear-fit, echo=FALSE, dev="png", dpi=300, results="asis", tidy=TRUE}
+```{r linear-fit, echo=FALSE, dev="png", dpi=300, results="asis", tidy=TRUE, out.width='50%'}
 funclist <- list(f1, f2, f3, f4, f5)
 means_slopes <- integer(length(funclist))
 means_intercepts <- integer(length(funclist))
@@ -64,18 +66,18 @@ for (fn in funclist) {
   if (func_ind < 3) {
     pandoc.header(paste("Function number", func_ind), level = 2)
     plot(dat)
-    densities <- density(dat[,"Intercept"])
-    hist(dat[,"Intercept"], freq = FALSE,  main = "Density plot for y-intercept", xlim = c(min(fakedat), max(fakedat)))
-    lines(densities)
+    densities <- density(dat[,"Intercept"], adjust = 2)
+    h <- hist(dat[,"Intercept"], freq = FALSE,  main = "Density plot for y-intercept", xlim = c(min(fakedat), max(fakedat)))
+    lines(densities, col = "red", lty=3)
     abline(a=0, b = 0)
-    densities <- density(dat[,"Slope"])
+    densities <- density(dat[,"Slope"], adjust = 2)
     hist(dat[,"Slope"], freq = FALSE,  main = "Density plot for slope")
-    lines(densities)
+    lines(densities, col = "red", lty=3)
     abline(a=0, b = 0)
     pandoc.p(paste("Mean of the intercept:", means_intercepts[func_ind]))
-    pandoc.p(paste("Variance of the intercept:", means_slopes[func_ind]))
-    pandoc.p(paste("Mean of the slope:", sd_slopes[func_ind]))
-    pandoc.p(paste("Variance of the slope:", sd_intercepts[func_ind]))
+    pandoc.p(paste("Variance of the intercept:", sd_intercepts[func_ind]^2))
+    pandoc.p(paste("Mean of the slope:", means_slopes[func_ind]))
+    pandoc.p(paste("Variance of the slope:", sd_slopes[func_ind]^2))
   }
   func_ind <- func_ind + 1
 }
@@ -83,14 +85,14 @@ for (fn in funclist) {
 ```
 
 ##Conclusion: 
-The bell shape histogram indicated that the values of c0 and c1 are normally distributed.
+The bell shape histogram indicated that the values of $\hat {c_0}$ and $\hat {c_1}$ are normally distributed.
 
 \pagebreak
 
 #Calculation of the standard deviation and mean value of c0 and c1 for every function.
 We plotted the values found for analyzing the influence of f(x) on mean and variance.
 
-``` {r comparison-charts, echo=FALSE, dev="png", dpi=300}
+``` {r comparison-charts, echo=FALSE, dev="png", dpi=300, out.width = '50%'}
 function_num <- 1:length(sd_slopes)
 plot(sd_slopes ~ function_num, type = 'l', ylim = c(0, max(sd_slopes)), main = "Standard deviation of slopes")
 plot(sd_intercepts ~ function_num, type = 'l', ylim =  c(0, max(sd_intercepts)), main = "Standard deviation of y-intercepts")
@@ -138,8 +140,8 @@ points(mytab[,1], mytab[,2], pch=16, cex=0.7)
 ```
 
 Solving the integral $\hat I = \int (\hat {C_0} + \hat {C_1}x)dx$ for $\hat I$, we found that $\hat I = 2 \hat {C_0}$
-Therefore V(I) = 4V(c0)
-CI = I +/- z(0.05)*V(I)
+Therefore $V(I) = 4V(c0)$
+CI = $\hat I \pm z_{0.05}{\hat I}$
 ``` {r confidence-interval-I, echo=FALSE, results = "asis"}
 VI <- 4*Vc0
 CI_l <- 2*realdat_coefs[1] - (1.64 * VI)
