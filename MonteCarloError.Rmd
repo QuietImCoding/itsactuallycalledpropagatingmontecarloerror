@@ -1,12 +1,10 @@
 ---
 title: "Propagating Monte Carlo Error"
-author: "Team A7"
-date: "11/29/2018"
+author: "Team A7: Dylan Arrabito, Nicole Holden, Daniel Monteagudo, Giovana Puccini"
+date: "12/06/2018"
 output:
   pdf_document: default
   html_document: default
-fig_width: 2
-fig_height: 1
 ---
 
 ```{r setup, include=FALSE}
@@ -40,7 +38,7 @@ makeFakeData <- function(f) {
 }
 ```
 
-Generation and plotting of the 1000 c0 and c1 values from fake data
+Generation and plotting of the 1000 $\hat c_0$ and $\hat c_1$ values from fake data
 
 ```{r linear-fit, echo=FALSE, dev="png", dpi=300, results="asis", tidy=TRUE, out.width='50%'}
 funclist <- list(f1, f2, f3, f4, f5)
@@ -48,6 +46,7 @@ means_slopes <- integer(length(funclist))
 means_intercepts <- integer(length(funclist))
 sd_slopes <- integer(length(funclist))
 sd_intercepts <- integer(length(funclist))
+covariances <- integer(length(funclist))
 
 #print.noquote(funclist[1])
 func_ind <- 1
@@ -59,6 +58,7 @@ for (fn in funclist) {
   }
 
   colnames(dat) <- c("Intercept", "Slope")
+  covariances[func_ind] <- cov(dat[,"Slope"], dat[,"Intercept"])
   means_intercepts[func_ind] <- mean(dat[,"Intercept"])
   means_slopes[func_ind] <- mean(dat[,"Slope"])
   sd_intercepts[func_ind] <- sd(dat[,"Intercept"])
@@ -67,17 +67,17 @@ for (fn in funclist) {
     pandoc.header(paste("Function number", func_ind), level = 2)
     plot(dat)
     densities <- density(dat[,"Intercept"], adjust = 2)
-    h <- hist(dat[,"Intercept"], freq = FALSE,  main = "Density plot for y-intercept", xlim = c(min(fakedat), max(fakedat)))
+    h <- hist(dat[,"Intercept"], freq = FALSE, xlab = "Intercept", main = "Density plot for y-intercept", xlim = c(min(fakedat), max(fakedat)))
     lines(densities, col = "red", lty=3)
     abline(a=0, b = 0)
     densities <- density(dat[,"Slope"], adjust = 2)
-    hist(dat[,"Slope"], freq = FALSE,  main = "Density plot for slope")
+    hist(dat[,"Slope"], freq = FALSE,  main = "Density plot for slope", xlab = "Slope")
     lines(densities, col = "red", lty=3)
     abline(a=0, b = 0)
-    pandoc.p(paste("Mean of the intercept:", means_intercepts[func_ind]))
-    pandoc.p(paste("Variance of the intercept:", sd_intercepts[func_ind]^2))
-    pandoc.p(paste("Mean of the slope:", means_slopes[func_ind]))
-    pandoc.p(paste("Variance of the slope:", sd_slopes[func_ind]^2))
+    pandoc.p(paste("Mean of the intercept:", signif(means_intercepts[func_ind], 5)))
+    pandoc.p(paste("Variance of the intercept:", signif(sd_intercepts[func_ind]^2, 5)))
+    pandoc.p(paste("Mean of the slope:", signif(means_slopes[func_ind], 5)))
+    pandoc.p(paste("Variance of the slope:", signif(sd_slopes[func_ind]^2, 5)))
   }
   func_ind <- func_ind + 1
 }
@@ -85,68 +85,96 @@ for (fn in funclist) {
 ```
 
 ##Conclusion: 
-The bell shape histogram indicated that the values of $\hat {c_0}$ and $\hat {c_1}$ are normally distributed.
+The bell shaped histogram indicated that the values of $\hat c_0$ and $\hat c_1$ are normally distributed.
 
 \pagebreak
 
-#Calculation of the standard deviation and mean value of c0 and c1 for every function.
-We plotted the values found for analyzing the influence of f(x) on mean and variance.
+#Calculation of the variance and mean value of $\hat c_0$ and $\hat c_1$ for every function.
+We plotted the means and variances of $\hat c_0$ and $\hat c_1$ for five different functions to see if the choice of $f(x)$ affected them.
 
 ``` {r comparison-charts, echo=FALSE, dev="png", dpi=300, out.width = '50%'}
 function_num <- 1:length(sd_slopes)
-plot(sd_slopes ~ function_num, type = 'l', ylim = c(0, max(sd_slopes)), main = "Standard deviation of slopes")
-plot(sd_intercepts ~ function_num, type = 'l', ylim =  c(0, max(sd_intercepts)), main = "Standard deviation of y-intercepts")
-plot(means_slopes ~ function_num, type = 'l', main = "Means of slopes")
-plot(means_intercepts ~ function_num, type = 'l', main = "Means of y-intercepts")
+plot(sd_slopes**2 ~ function_num, 
+     type = 'l', 
+     ylim = c(0, max(sd_slopes**2)), 
+     main = "Variance of slopes", 
+     ylab = "Variance")
+plot(sd_intercepts**2 ~ function_num, 
+     type = 'l', 
+     ylim =  c(0, max(sd_intercepts**2)), 
+     main = "Variance of y-intercepts",
+     ylab = "Variance")
+plot(means_slopes ~ function_num, 
+     type = 'l', 
+     main = "Means of slopes",
+     ylab = "Mean")
+plot(means_intercepts ~ function_num, 
+     type = 'l',
+     main = "Means of y-intercepts",
+     ylab = "Mean")
 ```
 
 ##Conclusion:
-Mean depends on f(x)
-Variance does not.
+Because the variance is roughly a straight line between all 5 functions, we can see that it does not depend on the choice of $f(x)$. Conversely, looking at the means, we can see that they vary wildly depending on your choice of function.
 
 \pagebreak
 
-We now calculated the covarience of c0 and c1. Since this value is related to the variances, we know that the choice of f(x) will not influence the result.
+#Covariance Calculation
 
-``` {r covariance-calc, echo=FALSE, results="asis"}
-covariance <- cov(dat[,"Slope"], dat[,"Intercept"])
-pandoc.p(paste("Covariance between slope and intercept", covariance))
+First we want to plot the covariances for all five different functions to determine whether covariance depends on the choice of $f(x)$.  
+
+$~$  
+$~$ `r echo=FALSE #Please forgive us professor but we wanted whitespace`  
+
+
+``` {r covariance-plot, echo=FALSE, results="asis"}
+plot(covariances ~ function_num, ylim = c(-1, 1), type = "l")
 ```
 
-##Conclusion:
-The value found for the convariance is negligible, and so the values of c0 and c1 are independent.
 
-From the covarience and varience values found we found the formula for the varience of the linear model, depending on the choice of x.
+##Conclusion:
+The graph shows that the covariance does not depend on the choice of $f(x)$ and we can see that the __covariance for any function is approximately zero__ so we can say that the two coefficients $\hat c_0$ and $\hat c_1$ are uncorrelated for any $f(x)$.
+
+\pagebreak
+
+#Variance of a linear fit
+
+From the covariance and variance values found, we used the formula for the variance of a linear combination ($V(f(x)) = V(\hat c_0) + V(\hat c_1)x^2 + 2xCov(\hat c_0, \hat c_1)$) to find an expression for the variance of our linear model.
 
 ``` {r variance-calc, echo=FALSE, results="asis"}
 realdat_coefs <- coef( lm( mytab[,2] ~ mytab[,1]) )
 
-Vc0 <- round(mean(sd_intercepts)**2, 6)
-Vc1<- round(mean(sd_slopes)**2, 6)
-pandoc.p(paste0("V(f(x)) = ", Vc0, " + ", Vc1, "x^2 + ", "0"))
+Vc0 <- signif(mean(sd_intercepts)**2, 5)
+Vc1<- signif(mean(sd_slopes)**2, 5)
+pandoc.p(paste0("$V(f(x)) = ", Vc0, " + ", Vc1, "x^2 + ", "0$"))
 ``` 
+
+#Plotting a confidence interval for a linear fit
 
 From the previous variance formula, we calculated the 90% confidence interval for the linear model.
 We plotted the interval together with the best fit linear model and the original data.
+
+$~$  `r echo=FALSE #You thought you saw the last of the empty formula... You were wrong`
 
 ``` {r confidence-interval, echo=FALSE, dev="png", dpi=300}
 bottom_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) + (1.65 * sqrt(Vc0 + Vc1 * (mytab[,1]**2) ))
 top_int <- realdat_coefs[1] + (realdat_coefs[2] * mytab[,1]) - (1.65 * sqrt(Vc0 + Vc1 * (mytab[,1]**2) ))
 
-plot( mytab[,1], bottom_int, type = 'l', col = "red", lt=3)
+plot( mytab[,1], bottom_int, type = 'l', col = "red", lty=3, xlab = "X", ylab = "Y")
 abline(lm( mytab[,2] ~ mytab[,1]))
-lines( mytab[,1], top_int, col = "red", lt=3)
+lines( mytab[,1], top_int, col = "red", lty=3)
 points(mytab[,1], mytab[,2], pch=16, cex=0.7)
 ```
 
-Solving the integral $\hat I = \int (\hat {C_0} + \hat {C_1}x)dx$ for $\hat I$, we found that $\hat I = 2 \hat {C_0}$
-Therefore $V(I) = 4V(c0)$
-CI = $\hat I \pm z_{0.05}{\hat I}$
+Solving the integral $\hat I = \int (\hat c_0 + \hat c_1x)dx$ for $\hat I$, we found that $\hat I = 2 \hat c_0$
+
+Therefore $V(\hat I) = 4V(\hat c_0)$
+
+CI = $\hat I \pm z_{0.05}V({\hat I})$
 ``` {r confidence-interval-I, echo=FALSE, results = "asis"}
 VI <- 4*Vc0
-CI_l <- 2*realdat_coefs[1] - (1.64 * VI)
-CI_u <- 2*realdat_coefs[1] + (1.64 * VI)
-pandoc.p(paste("CI[", CI_l, ",", CI_u, "]"))
+CI_l <- 2*realdat_coefs[1] - (1.64 * sqrt(VI))
+CI_u <- 2*realdat_coefs[1] + (1.64 * sqrt(VI))
+pandoc.p(paste0("CI = $2{\\hat c_0} \\pm ", signif(1.64 * sqrt(VI), 5), "$"))
+pandoc.header(paste("Final confidence interval: $[", signif(CI_l, 5), ",", signif(CI_u, 5), "]$"), level = 2)
 ```
-
-# Conclusion
